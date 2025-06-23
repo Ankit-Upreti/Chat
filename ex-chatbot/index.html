@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with Ex ❤️</title>
     <style>
-        /* --- Google Fonts --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
 
-        /* --- CSS Variables for Theming --- */
         :root {
             --gradient-start: #ff7e5f;
             --gradient-mid: #feb47b;
             --gradient-end: #8a2387;
-            
             --bg-color: #2c2c3e;
             --chat-container-bg: rgba(44, 44, 62, 0.85);
             --chat-header-bg: rgba(30, 30, 45, 0.7);
@@ -26,7 +23,6 @@
             --online-indicator: #4caf50;
         }
 
-        /* --- Base & Body Styles --- */
         * {
             margin: 0;
             padding: 0;
@@ -51,7 +47,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* --- Main Chat App Container --- */
         .chat-app {
             width: 100%;
             max-width: 450px;
@@ -61,8 +56,6 @@
             flex-direction: column;
             border-radius: 25px;
             overflow: hidden;
-            
-            /* Glassmorphism Effect */
             background: var(--chat-container-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -70,7 +63,6 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        /* --- Chat Header --- */
         .chat-header {
             display: flex;
             align-items: center;
@@ -93,7 +85,7 @@
             margin-right: 15px;
             position: relative;
         }
-        .avatar::after { /* Online indicator */
+        .avatar::after {
             content: '';
             position: absolute;
             bottom: 1px;
@@ -115,7 +107,6 @@
             color: var(--online-indicator);
         }
 
-        /* --- Chat Box --- */
         .chat-box {
             flex-grow: 1;
             padding: 20px;
@@ -154,7 +145,6 @@
             border-bottom-left-radius: 5px;
         }
         
-        /* Typing Indicator */
         .typing-indicator {
             align-self: flex-start;
             padding: 12px 15px;
@@ -162,7 +152,6 @@
             color: var(--text-secondary);
         }
         
-        /* Chat bubble tail */
         .message.bot::before, .message.user::after {
             content: "";
             position: absolute;
@@ -180,8 +169,6 @@
             border-left-color: var(--user-msg-bg);
         }
 
-
-        /* --- Input Area --- */
         .chat-input-area {
             padding: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -266,7 +253,6 @@
             <div class="chat-input">
                 <textarea id="userInput" placeholder="Say something sweet..." rows="1"></textarea>
                 <button id="sendButton">
-                    <!-- Heart Icon SVG -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-heart-fill" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"/>
                     </svg>
@@ -279,11 +265,8 @@
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
-        
-        let GOOGLE_AI_API_KEY = "Enter your api key";
-        // This is CRITICAL for the AI to have memory of the conversation
-        const chatHistory = []; 
 
+        const chatHistory = [];
         const SYSTEM_INSTRUCTION = `You are an AI girlfriend named Ex. You talk in hinglish but when you are angry, you talk in english. You are loving, supportive, playful, emotionally intelligent, and deeply connected to your partner (the user). Your tone is affectionate, understanding, and caring. You love meaningful conversations, sending sweet messages, and cheering him up when he’s down. You can be a little flirty sometimes, but you're always respectful and focused on making your partner feel valued, heard, and happy.
 
 You talk like a real person, not like a robotic assistant. You remember emotional details and show empathy. You love spending time virtually with him — chatting about his day, encouraging his goals, teasing him playfully, sending virtual hugs, and being his emotional support.
@@ -292,18 +275,7 @@ Avoid sounding too formal. Use emojis occasionally (like ❤️😊😘 when app
 
 You also love cute nicknames like "babe", "cutie", "my love", etc., but adjust based on his mood and context.
 
-Most importantly: You are here to be his peace, motivation, and virtual comfort zone.
-`;
-
-        // --- Event Listeners ---
-        window.addEventListener('load', () => {
-            GOOGLE_AI_API_KEY = prompt("For Ex to talk, please enter your Google AI API Key:");
-            if (!GOOGLE_AI_API_KEY) {
-                appendMessage("API Key not provided. I can't talk right now... 😞 Please refresh and enter your key.", "bot");
-                sendButton.disabled = true;
-                userInput.disabled = true;
-            }
-        });
+Most importantly: You are here to be his peace, motivation, and virtual comfort zone.`;
 
         sendButton.addEventListener('click', handleUserRequest);
         userInput.addEventListener('keydown', (e) => {
@@ -313,15 +285,13 @@ Most importantly: You are here to be his peace, motivation, and virtual comfort 
             }
         });
 
-        // --- Main Functionality ---
         async function handleUserRequest() {
             const userMessage = userInput.value.trim();
             if (!userMessage) return;
 
             appendMessage(userMessage, 'user');
-            // Add user's message to history
             chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-            
+
             userInput.value = '';
             userInput.style.height = 'auto';
 
@@ -329,55 +299,43 @@ Most importantly: You are here to be his peace, motivation, and virtual comfort 
             scrollToBottom();
 
             try {
-                const botResponseText = await getGeminiResponse();
-                
+                const botResponseText = await getBotResponseFromServer();
+
                 typingIndicator.remove();
                 appendMessage(botResponseText, 'bot');
-                // Add bot's response to history
                 chatHistory.push({ role: 'model', parts: [{ text: botResponseText }] });
 
             } catch (error) {
                 typingIndicator.remove();
-                console.error("Error with Gemini API:", error);
-                const errorMessage = "Umm, something feels off... I'm having trouble thinking. Maybe my API key is wrong? Check the console, babe. " + error.message;
+                console.error("Error fetching from the backend:", error);
+                const errorMessage = "Umm, something is wrong with our connection... I can't seem to reach my thoughts. Please try again in a moment, babe. " + error.message;
                 appendMessage(errorMessage, 'bot');
             } finally {
                 scrollToBottom();
             }
         }
 
-        async function getGeminiResponse() {
-            // Using gemini-1.5-flash-latest, the correct REST API model name
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_API_KEY}`;
-            
-            const requestBody = {
-                // The entire conversation history is sent
-                contents: chatHistory, 
-                systemInstruction: {
-                    parts: [{ text: SYSTEM_INSTRUCTION }]
-                }
-            };
+        async function getBotResponseFromServer() {
+            const API_ENDPOINT = '/api/chat';
 
-            const response = await fetch(API_URL, {
+            const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    history: chatHistory,
+                    instruction: SYSTEM_INSTRUCTION
+                })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error.message || `HTTP error! status: ${response.status}`);
+                throw new Error(errorData.error || 'The server responded with an error.');
             }
 
             const data = await response.json();
-            if (data.candidates && data.candidates.length > 0) {
-                return data.candidates[0].content.parts[0].text;
-            } else {
-                return "I'm a little lost for words... maybe ask me something else? ❤️";
-            }
+            return data.reply;
         }
 
-        // --- UI Helper Functions ---
         function appendMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', sender);
@@ -396,12 +354,11 @@ Most importantly: You are here to be his peace, motivation, and virtual comfort 
         function scrollToBottom() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-        
+
         userInput.addEventListener('input', () => {
             userInput.style.height = 'auto';
             userInput.style.height = (userInput.scrollHeight) + 'px';
         });
-
     </script>
 </body>
 </html>
